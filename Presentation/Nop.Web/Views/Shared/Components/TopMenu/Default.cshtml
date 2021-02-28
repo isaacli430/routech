@@ -1,0 +1,212 @@
+﻿@model TopMenuModel
+@using Nop.Services.Catalog
+@using Nop.Core.Domain.Catalog
+@using Nop.Services.Seo
+@inject ICategoryService categoryService
+@inject IUrlRecordService urlRecordService
+@inject IManufacturerService manufacturerService
+@{
+    List<Category> categories = new List<Category>();
+    foreach (Category category in categoryService.GetAllCategories())
+    {
+        if (categoryService.GetAllCategoriesByParentCategoryId(category.Id).Count > 0 && category.ParentCategoryId == 0)
+        {
+            categories.Add(category);
+        }
+    }
+    Dictionary<string, List<Manufacturer>> manufacturers = new Dictionary<string, List<Manufacturer>>();
+    foreach (Category category in categories)
+    {
+        manufacturers.Add(urlRecordService.GetSeName(category), new List<Manufacturer>());
+    }
+    //foreach (Manufacturer manufacturer in manufacturerService.GetAllManufacturers())
+    //{
+    //    if (manufacturers.ContainsKey(manufacturer.MetaKeywords))
+    //    {
+
+    //        manufacturers[manufacturer.MetaKeywords].Add(manufacturer);
+    //    }
+    //}
+}
+<ul class="top-menu notmobile">
+    @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HeaderMenuBefore })
+    @*@if (Model.DisplayHomepageMenuItem)
+        {
+            <li><a href="@Url.RouteUrl("Homepage")">@T("Homepage")</a></li>
+        }*@
+    @*@if (!Model.UseAjaxMenu)
+        {
+            var rootCategories = Model.Categories.Where(x => x.IncludeInTopMenu).ToList();
+            @foreach (var category in rootCategories)
+            {
+                var categoryLineModel = new TopMenuModel.CategoryLineModel
+                {
+                    Category = category
+                };
+                @await Html.PartialAsync("_CategoryLine.TopMenu", categoryLineModel)
+            }
+
+
+        }*@
+    @*@foreach (var topic in Model.Topics)
+        {
+            <li><a href="@Url.RouteUrl("Topic", new { SeName = topic.SeName })">@topic.Name</a></li>
+        }*@
+    @*@if (Model.NewProductsEnabled && Model.DisplayNewProductsMenuItem)
+        {
+            <li><a href="@Url.RouteUrl("NewProducts")">@T("Products.NewProducts")</a></li>
+        }
+        @if (Model.DisplayProductSearchMenuItem)
+        {
+            <li><a href="@Url.RouteUrl("ProductSearch")">@T("Search")</a></li>
+        }
+        @if (Model.DisplayCustomerInfoMenuItem)
+        {
+            <li><a href="@Url.RouteUrl("CustomerInfo")">@T("Account.MyAccount")</a></li>
+        }
+        @if (Model.BlogEnabled && Model.DisplayBlogMenuItem)
+        {
+            <li><a href="@Url.RouteUrl("Blog")">@T("Blog")</a></li>
+        }
+        @if (Model.ForumEnabled && Model.DisplayForumsMenuItem)
+        {
+            <li><a href="@Url.RouteUrl("Boards")">@T("Forum.Forums")</a></li>
+        }
+        @if (Model.DisplayContactUsMenuItem)
+        {
+            <li><a href="@Url.RouteUrl("ContactUs")">@T("ContactUs")</a></li>
+        }*@
+    @foreach (Category category in categories)
+    {
+        <li>
+            <a href="/@urlRecordService.GetSeName(category)">@category.Name</a>
+            <ul class="sublist">
+                @foreach (Category subcat in categoryService.GetAllCategoriesByParentCategoryId(category.Id))
+                {
+                    @if (categoryService.GetAllCategoriesByParentCategoryId(subcat.Id).Count > 0)
+                    {
+                        <li class="subsublist-toggle"><a href="/@urlRecordService.GetSeName(subcat)"><b>@subcat.Name</b></a></li>
+                        <span class="subsublist">
+                            @foreach (Category subsubcat in categoryService.GetAllCategoriesByParentCategoryId(subcat.Id))
+                            {
+                                <li><a href="/@urlRecordService.GetSeName(subsubcat)">@subsubcat.Name</a></li>
+                            }
+                        </span>
+                    }
+                    else
+                    {
+                        <li><a href="/@urlRecordService.GetSeName(subcat)">@subcat.Name</a></li>
+                    }
+                }
+                @if (manufacturers[urlRecordService.GetSeName(category)].Count > 0)
+                {
+                    <li class="subsublist-toggle"><b>Manufacturers</b></li>
+                    <span class="subsublist">
+                        @foreach (Manufacturer manufacturer in manufacturers[urlRecordService.GetSeName(category)])
+                        {
+                            <li><a href="/@urlRecordService.GetSeName(manufacturer)">@manufacturer.Name</a></li>
+                        }
+                    </span>
+                }
+            </ul>
+        </li>
+    }
+    @*<li>
+            <a href="@Url.RouteUrl("Eshop", new { group = "" })">Estore</a>
+                <ul class="sublist">
+                    @foreach (Category category in categories.OrderBy(category=>category.Name))
+                    {
+                        <li><a href="@Url.RouteUrl("Eshop", new { group = urlRecordService.GetSeName(category) })">@category.Name</a></li>
+                    }
+                </ul>
+        </li>*@
+    @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HeaderMenuAfter })
+</ul>
+@{
+    var rootCategoriesResponsive = Model.Categories.ToList();
+    //name it "Categories" if we have only categories. Otherwise, "Menu"
+    var responsiveMenuTitle = Model.HasOnlyCategories ? T("Categories") : T("Menu");
+    <div class="menu-toggle">@responsiveMenuTitle</div>
+    <ul class="top-menu mobile">
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.MobHeaderMenuBefore })
+        @if (Model.DisplayHomepageMenuItem)
+        {
+            <li><a href="@Url.RouteUrl("Homepage")">@T("Homepage")</a></li>
+        }
+        @if (!Model.UseAjaxMenu)
+        {
+            @foreach (var category in rootCategoriesResponsive)
+            {
+                var categoryLineModel = new TopMenuModel.CategoryLineModel
+                {
+                    Category = category,
+                    ResponsiveMobileMenu = true
+                };
+                @await Html.PartialAsync("_CategoryLine.TopMenu", categoryLineModel)
+            }
+
+        }
+        @foreach (var topic in Model.Topics)
+        {
+            <li><a href="@Url.RouteUrl("Topic", new { SeName = topic.SeName })">@topic.Name</a></li>
+        }
+        @if (Model.NewProductsEnabled && Model.DisplayNewProductsMenuItem)
+        {
+            <li><a href="@Url.RouteUrl("NewProducts")">@T("Products.NewProducts")</a></li>
+        }
+        @if (Model.DisplayProductSearchMenuItem)
+        {
+            <li><a href="@Url.RouteUrl("ProductSearch")">@T("Search")</a></li>
+        }
+        @if (Model.DisplayCustomerInfoMenuItem)
+        {
+            <li><a href="@Url.RouteUrl("CustomerInfo")">@T("Account.MyAccount")</a></li>
+        }
+        @if (Model.BlogEnabled && Model.DisplayBlogMenuItem)
+        {
+            <li><a href="@Url.RouteUrl("Blog")">@T("Blog")</a></li>
+        }
+        @if (Model.ForumEnabled && Model.DisplayForumsMenuItem)
+        {
+            <li><a href="@Url.RouteUrl("Boards")">@T("Forum.Forums")</a></li>
+        }
+        @if (Model.DisplayContactUsMenuItem)
+        {
+            <li><a href="@Url.RouteUrl("ContactUs")">@T("ContactUs")</a></li>
+        }
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.MobHeaderMenuAfter })
+    </ul>
+
+    @if (Model.UseAjaxMenu)
+    {
+        <script asp-location="Footer">
+        $(document).ready(function () {
+            $('.menu-toggle').on('click', function () {
+                $(this).siblings('.top-menu.mobile').slideToggle('slow');
+            });
+            var localized_data = {
+                AjaxFailure: "@T("MainMenu.AjaxFailure")"
+            };
+            mainMenu.init('@Url.RouteUrl("GetCatalogRoot")', '@Url.RouteUrl("GetCatalogSubCategories")', 'ul.top-menu.notmobile', 'ul.top-menu.mobile', localized_data);
+        });
+        </script>
+
+        Html.AppendScriptParts(ResourceLocation.Footer, "~/js/public.menu.js");
+
+    }
+    else
+    {
+        <script asp-location="Footer">
+            $(document).ready(function () {
+                $('.menu-toggle').on('click', function () {
+                    $(this).siblings('.top-menu.mobile').slideToggle('slow');
+                });
+                $('.top-menu.mobile .sublist-toggle').on('click', function () {
+                    $(this).siblings('.sublist').slideToggle('slow');
+                });
+            });
+        </script>
+
+    }
+
+}

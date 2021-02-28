@@ -1,0 +1,55 @@
+﻿
+@using Nop.Core.Domain.Catalog;
+@using Nop.Services.Media;
+@using Nop.Services.Seo
+@using Nop.Services.Catalog 
+@model List<Category>
+@inject IPictureService pictureService
+@inject IUrlRecordService urlRecordService
+@inject ICategoryService categoryService
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "_ColumnsOne";
+}
+
+<div class="category-container">
+    @{
+        if (Model != null)
+        {
+            if (Model.Count > 0)
+            {
+                foreach (var category in Model.OrderBy(category => category.Name))
+                {
+                    <div class="category-block">
+                        @{
+                            if (categoryService.GetAllCategoriesByParentCategoryId(category.Id).Count > 0)
+                            {
+                                <a href="@Url.RouteUrl("Eshop", new { group = urlRecordService.GetSeName(category)})">
+                                    <h2>@category.Name</h2>
+                                    <img src="@pictureService.GetPictureUrl(category.PictureId)" />
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="/@urlRecordService.GetSeName(category)">
+                                    <h2>@category.Name</h2>
+                                    <img src="@pictureService.GetPictureUrl(category.PictureId)" />
+                                </a>
+                            }
+                        }
+                        
+                    </div>
+                }
+            }
+            else
+            {
+                <h1>Group not found</h1>
+            }
+        }
+        else
+        {
+            <h1>Group not found</h1>
+        }
+    }
+</div>
